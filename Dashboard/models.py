@@ -1,0 +1,69 @@
+from django.db import models
+
+class Dashboard(models.Model):
+    MODULE_CHOICES = [
+        ("project", "Project"),
+        ("accounting", "Accounting"),
+        ("hrm", "HRM"),
+        ("recruitment", "Recruitment"),
+        ("pos", "POS"),
+        ("crm", "CRM"),
+        ("sales_agent", "Sales Agent"),
+        ("sales", "Sales"),
+        ("vcard", "vCard"),
+        ("lms", "LMS"),
+        ("movie_show", "Movie Show"),
+        ("hotel", "Hotel"),
+        ("rotas", "Rotas"),
+        ("cmms", "CMMS"),
+        ("fleet", "Fleet"),
+        ("fix_equipment", "Fix Equipment"),
+        ("support", "Support"),
+        ("appointment", "Appointment"),
+        ("parking", "Parking"),
+        ("property_manage", "Property Manage"),
+        ("beauty_spa", "Beauty Spa"),
+        ("facilities", "Facilities"),
+        ("gym", "GYM"),
+        ("bookings", "Bookings"),
+        ("vehicle_booking", "Vehicle Booking"),
+        ("school", "School"),
+        ("music_institute", "Music Institute"),
+        ("childcare", "Childcare"),
+        ("waste", "Waste Management"),
+        ("cleaning", "Cleaning"),
+        ("laundry", "Laundry"),
+        ("vehicle_inspection", "Vehicle Inspection"),
+        ("machine_repair", "Machine Repair"),
+        ("medical_lab", "Medical Lab"),
+        ("pharmacy", "Pharmacy Management"),
+        ("car_dealership", "Car Dealership"),
+        ("freight", "Freight"),
+        ("mobile_service", "Mobile Service"),
+        ("driving_school", "Driving School"),
+        ("insurance", "Insurance"),
+        ("tour_travel", "Tour & Travel"),
+        ("courier", "Courier Management"),
+        ("movie_tv", "Movie & TV"),
+        ("roadmap", "Roadmap"),
+        ("events", "Events"),
+        ("queue", "Queue Management"),
+        ("procurement", "Procurement"),
+        ("quiz", "Quiz"),
+        ("water_park", "Water Park"),
+        ("vehicle_trade", "Vehicle Trade"),
+        ("coworking", "Coworking Space"),
+        ("sports", "Sports"),
+    ]
+
+    name = models.CharField(max_length=255)
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Dashboard"
+        verbose_name_plural = "Dashboards"
+
+    def __str__(self):
+        return f"{self.name} Dashboard"
