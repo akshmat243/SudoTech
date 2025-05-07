@@ -1,5 +1,10 @@
 from rest_framework import serializers
 from .models import User, Role
+from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate
+from django.utils.translation import gettext_lazy as _
+
+User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
@@ -17,9 +22,31 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data.pop('confirm_password')
-        user = User.objects.create_user(**validated_data)
-        return user
+        validated_data.pop('confirm_password')  # Remove confirm_password before creating user
+        return User.objects.create_user(**validated_data)
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if not email or not password:
+            raise serializers.ValidationError(_("Both email and password are required."))
+
+        user = authenticate(email=email, password=password)
+        if not user:
+            raise serializers.ValidationError(_("Invalid email or password."))
+
+        if not user.is_active:
+            raise serializers.ValidationError(_("User account is disabled."))
+
+        attrs['user'] = user
+        return attrs
+
 
 
 class RoleSerializer(serializers.ModelSerializer):
