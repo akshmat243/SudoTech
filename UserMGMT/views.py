@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
+from django.contrib.auth import login
 from .serializers import RegisterSerializer, AssignRoleSerializer, RoleSerializer, LoginSerializer
 from .models import User,Role
 from django.shortcuts import render, redirect
