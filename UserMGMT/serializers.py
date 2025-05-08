@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Role
+from .models import User
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
@@ -48,6 +48,27 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
+from rest_framework import serializers
+from .models import Module, ModelAccess, Role, RoleModelPermission, UserRole
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class ModuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Module
+        fields = ['id', 'name']
+
+
+class ModelAccessSerializer(serializers.ModelSerializer):
+    module = ModuleSerializer(read_only=True)
+    module_id = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all(), source='module', write_only=True)
+
+    class Meta:
+        model = ModelAccess
+        fields = ['id', 'module', 'module_id', 'model_name']
+
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,14 +76,30 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
-class AssignRoleSerializer(serializers.ModelSerializer):
-    role = RoleSerializer(read_only=True)  # Show full role object (id + name)
-    role_id = serializers.PrimaryKeyRelatedField(
-        queryset=Role.objects.all(),
-        source='role',  # Sets the actual role field on the model
-        write_only=True
-    )
+class RoleModelPermissionSerializer(serializers.ModelSerializer):
+    role = RoleSerializer(read_only=True)
+    role_id = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), source='role', write_only=True)
+
+    model_access = ModelAccessSerializer(read_only=True)
+    model_access_id = serializers.PrimaryKeyRelatedField(queryset=ModelAccess.objects.all(), source='model_access', write_only=True)
 
     class Meta:
-        model = User
-        fields = ['role', 'role_id']
+        model = RoleModelPermission
+        fields = [
+            'id',
+            'role', 'role_id',
+            'model_access', 'model_access_id',
+            'can_manage', 'can_create', 'can_edit', 'can_delete'
+        ]
+
+
+class UserRoleSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='user', write_only=True)
+
+    role = RoleSerializer(read_only=True)
+    role_id = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), source='role', write_only=True)
+
+    class Meta:
+        model = UserRole
+        fields = ['id', 'user', 'user_id', 'role', 'role_id']

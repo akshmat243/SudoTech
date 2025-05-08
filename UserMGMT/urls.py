@@ -9,7 +9,5 @@ urlpatterns = [
 
 
 
-    path('api/assign-role/<int:pk>/', AssignRoleView.as_view(), name='assign-role'),
-    path('api/roles/', RoleListCreateView.as_view(), name='role-list-create'),
 
 ]

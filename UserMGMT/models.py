@@ -19,18 +19,12 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-class Role(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.name
     
     
 class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     workspace_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, related_name="users")
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -41,4 +35,38 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+class Module(models.Model):
+    name = models.CharField(max_length=100, unique=True)
 
+    def __str__(self):
+        return self.name
+
+class ModelAccess(models.Model):
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    model_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.module.name} - {self.model_name}"
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class RoleModelPermission(models.Model):
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    model_access = models.ForeignKey(ModelAccess, on_delete=models.CASCADE)
+    can_manage = models.BooleanField(default=False)
+    can_create = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
+
+
+from django.contrib.auth import get_user_model
+
+class UserRole(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
