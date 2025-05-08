@@ -1,10 +1,10 @@
-from rest_framework import generics, permissions, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
-from .serializers import RegisterSerializer, AssignRoleSerializer, RoleSerializer, LoginSerializer
-from .models import User,Role
+from .serializers import RegisterSerializer, LoginSerializer
+from .models import User
 from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
@@ -171,25 +171,6 @@ class LogoutView(View):
 
     
 
-class CanAssignRole(permissions.BasePermission):
-    def has_permission(self, request, view):
-        user = request.user
-        return (
-            user and user.is_authenticated and (
-                user.is_superuser or 
-                (user.role and user.role.name in ["Admin", "Manager"])
-            )
-        )
 
-
-class AssignRoleView(generics.UpdateAPIView):
-    queryset = User.objects.all()
-    serializer_class = AssignRoleSerializer
-    permission_classes = [CanAssignRole]
-
-class RoleListCreateView(generics.ListCreateAPIView):
-    queryset = Role.objects.all()
-    serializer_class = RoleSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
 
