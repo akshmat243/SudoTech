@@ -12,6 +12,9 @@ from django.views import View
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator as token_generator
+from django.contrib import messages
 
 
 
@@ -25,7 +28,7 @@ class RegisterView(APIView):
         is_json = request.content_type == 'application/json'
 
         if is_json:
-            serializer = RegisterSerializer(data=request.data)
+            serializer = RegisterSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
                 serializer.save()
                 return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
@@ -39,10 +42,10 @@ class RegisterView(APIView):
             'confirm_password': request.POST.get('confirm_password'),
         }
 
-        serializer = RegisterSerializer(data=form_data)
+        serializer = RegisterSerializer(data=form_data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            return redirect('login')
+            return redirect('registration_email_sent')
         
         return render(request, 'register.html', {
             'form_errors': serializer.errors,
@@ -85,8 +88,12 @@ class LoginView(APIView):
 
         if request.content_type == 'application/json':
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        
+        error_list = []
+        for field_errors in serializer.errors.values():
+            error_list.extend(field_errors)
 
-        return render(request, 'login.html', {'errors': serializer.errors, 'email': data.get('email')})
+        return render(request, 'login.html', {'errors': error_list, 'email': data.get('email')})
 
 
 
@@ -168,8 +175,23 @@ class LogoutView(View):
         )
 
 
+def verify_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
 
-    
+        if token_generator.check_token(user, token):
+            user.is_email_verified = True
+            user.save()
+            messages.success(request, 'Email verified successfully. You can now wait until the admin verifies your account.')
+            return redirect('login')
+        else:
+            messages.error(request, 'Invalid verification link.')
+    except Exception:
+        messages.error(request, 'Verification failed.')
+
+    return redirect('register')
+
 
 
 

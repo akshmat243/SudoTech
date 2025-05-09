@@ -4,14 +4,14 @@ from .models import User, Role, Module, ModelAccess, Role, RoleModelPermission, 
 
 class UserAdmin(BaseUserAdmin):
     ordering = ['email']
-    list_display = ['email', 'name', 'workspace_name', 'is_staff', 'is_superuser']
-    list_filter = ['is_staff', 'is_superuser', 'is_active']
+    list_display = ['email', 'name', 'workspace_name', 'is_staff', 'is_superuser', 'is_email_verified']
+    list_filter = ['is_staff', 'is_superuser', 'is_active', 'is_email_verified']
     search_fields = ['email', 'name', 'workspace_name']
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal Info', {'fields': ('name', 'workspace_name')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_email_verified', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login',)}),
     )
 
@@ -74,6 +74,6 @@ class RoleModelPermissionAdmin(admin.ModelAdmin):
 class UserRoleAdmin(admin.ModelAdmin):
     list_display = ('user', 'role')
     list_filter = ('role',)
-    search_fields = ('user__username', 'user__email', 'role__name')
+    search_fields = ('user__email', 'role__name')
     autocomplete_fields = ['user', 'role']
     list_per_page = 25
