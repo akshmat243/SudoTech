@@ -36,7 +36,7 @@ class RegisterView(APIView):
         
         form_data = {
             'name': request.POST.get('name'),
-            'workspace_name': request.POST.get('workspace_name'),
+            'username': request.POST.get('username'),
             'email': request.POST.get('email'),
             'password': request.POST.get('password'),
             'confirm_password': request.POST.get('confirm_password'),
