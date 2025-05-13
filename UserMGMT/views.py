@@ -22,7 +22,7 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return render(request, 'register.html')
+        return render(request, 'auth-basic-signup.html')
 
     def post(self, request):
         is_json = request.content_type == 'application/json'
@@ -47,7 +47,7 @@ class RegisterView(APIView):
             serializer.save()
             return redirect('registration_email_sent')
         
-        return render(request, 'register.html', {
+        return render(request, 'auth-basic-signup.html', {
             'form_errors': serializer.errors,
             'form_data': form_data
         })
@@ -59,7 +59,7 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return render(request, 'login.html')
+        return render(request, 'auth-basic-signin.html')
 
     def post(self, request):
         data = request.data if request.content_type == 'application/json' else request.POST
@@ -93,9 +93,7 @@ class LoginView(APIView):
         for field_errors in serializer.errors.values():
             error_list.extend(field_errors)
 
-        return render(request, 'login.html', {'errors': error_list, 'email': data.get('email')})
-
-
+        return render(request, 'auth-basic-signin.html', {'form': error_list, 'email': data.get('email')})
 
 
 class DashboardView(View):
