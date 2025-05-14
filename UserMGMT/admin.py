@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Role, Module, ModelAccess, Role, RoleModelPermission, UserRole
+from .models import User, Role, Module, ModelAccess, Role, UserRole
 
 class UserAdmin(BaseUserAdmin):
     ordering = ['email']
@@ -43,31 +43,13 @@ class ModelAccessAdmin(admin.ModelAdmin):
     list_per_page = 25
 
 
-class RoleModelPermissionInline(admin.TabularInline):
-    model = RoleModelPermission
-    extra = 1
-    autocomplete_fields = ['model_access']
-    fields = ('model_access', 'can_manage', 'can_create', 'can_edit', 'can_delete')
-    show_change_link = True
-
-
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ('name',)
-    inlines = [RoleModelPermissionInline]
+    # inlines = [RoleModelPermissionInline]
     list_per_page = 25
 
-
-@admin.register(RoleModelPermission)
-class RoleModelPermissionAdmin(admin.ModelAdmin):
-    list_display = (
-        'role', 'model_access', 'can_manage', 'can_create', 'can_edit', 'can_delete'
-    )
-    list_filter = ('role', 'model_access__module')
-    search_fields = ('role__name', 'model_access__model_name', 'model_access__module__name')
-    autocomplete_fields = ['role', 'model_access']
-    list_per_page = 25
 
 
 @admin.register(UserRole)

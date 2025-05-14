@@ -72,7 +72,7 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
-from .models import Module, ModelAccess, Role, RoleModelPermission, UserRole
+from .models import Module, ModelAccess, Role, UserRole
 
 
 class ModuleSerializer(serializers.ModelSerializer):
@@ -95,22 +95,6 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = ['id', 'name']
 
-
-class RoleModelPermissionSerializer(serializers.ModelSerializer):
-    role = RoleSerializer(read_only=True)
-    role_id = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), source='role', write_only=True)
-
-    model_access = ModelAccessSerializer(read_only=True)
-    model_access_id = serializers.PrimaryKeyRelatedField(queryset=ModelAccess.objects.all(), source='model_access', write_only=True)
-
-    class Meta:
-        model = RoleModelPermission
-        fields = [
-            'id',
-            'role', 'role_id',
-            'model_access', 'model_access_id',
-            'can_manage', 'can_create', 'can_edit', 'can_delete'
-        ]
 
 
 class UserRoleSerializer(serializers.ModelSerializer):

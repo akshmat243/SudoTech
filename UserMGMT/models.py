@@ -55,17 +55,11 @@ class ModelAccess(models.Model):
 
 class Role(models.Model):
     name = models.CharField(max_length=100)
+    permission = models.ManyToManyField('auth.Permission', blank=True)
 
     def __str__(self):
         return self.name
 
-class RoleModelPermission(models.Model):
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
-    model_access = models.ForeignKey(ModelAccess, on_delete=models.CASCADE)
-    can_manage = models.BooleanField(default=False)
-    can_create = models.BooleanField(default=False)
-    can_edit = models.BooleanField(default=False)
-    can_delete = models.BooleanField(default=False)
 
 
 class UserRole(models.Model):
