@@ -1,9 +1,7 @@
 from rest_framework import serializers
 from .models import User
-from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
@@ -13,7 +11,6 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
-# User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
