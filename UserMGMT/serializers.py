@@ -35,7 +35,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         token = token_generator.make_token(user)
         verification_link = f"http://{current_site.domain}{reverse('verify-email', kwargs={'uidb64': uid, 'token': token})}"
 
-        # Send email
+
         subject = 'Verify Your Email'
         message = render_to_string('emails/verify_email.html', {
             'user': user,

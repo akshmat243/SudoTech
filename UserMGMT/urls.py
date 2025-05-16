@@ -10,6 +10,7 @@ urlpatterns = [
     # path('dashboard/', DashboardView.as_view(), name='dashboard'),
     
     path('dashboard/<str:username>', AdminDashboardView.as_view(), name='dashboard'),
+
      path('approve_role/<int:user_id>/<int:role_id>/', ApproveRoleView.as_view(), name='approve_role'),
     path('deactivate_user/<int:user_id>/', DeactivateUserView.as_view(), name='deactivate_user'),
     path('activate_user/<int:user_id>/', ActivateUserView.as_view(), name='activate_user'),

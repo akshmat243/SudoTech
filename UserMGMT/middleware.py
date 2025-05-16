@@ -10,6 +10,7 @@ EXEMPT_PATHS = [
     '/UserMGMT/logout/',
     '/admin/login/',
     '/admin/',
+    '/allauth.socialaccount.providers.google/google/login/',
 ]
 
 class RolePermissionMiddleware:

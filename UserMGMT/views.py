@@ -283,10 +283,17 @@ from django.views.generic import TemplateView
 from django.shortcuts import redirect
 from UserMGMT.models import User, UserRole
 
+from django.http import Http404
+
 class AdminDashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'index.html'
 
     def dispatch(self, request, *args, **kwargs):
+        # Get username from URL
+        username = kwargs.get('username')
+        if username != request.user.username:
+            raise Http404("You are not authorized to view this dashboard.")
+
         # Allow access if superuser
         if request.user.is_superuser:
             return super().dispatch(request, *args, **kwargs)
@@ -294,7 +301,7 @@ class AdminDashboardView(LoginRequiredMixin, TemplateView):
         # Check if user has approved 'admin' role
         user_roles_qs = UserRole.objects.select_related('role').filter(user=request.user, is_approved=True)
         if not user_roles_qs.exists() or not any(ur.role.name.lower() == 'admin' for ur in user_roles_qs):
-            return redirect('logout')  # or a "403 Forbidden" page if you prefer
+            return redirect('logout')  # or a custom access denied page
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -302,44 +309,38 @@ class AdminDashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        user_roles_qs = UserRole.objects.select_related('role').filter(user=user, is_approved=True)
-        current_user_roles = [ur.role.name for ur in user_roles_qs]
         context['current_username'] = user.username
-        context['current_user_roles'] = current_user_roles
+        user_roles_qs = UserRole.objects.select_related('role').filter(user=user, is_approved=True)
+        context['current_user_roles'] = [ur.role.name for ur in user_roles_qs]
 
-        # Admin data
+        # Admin metrics
         users = User.objects.filter(is_superuser=False)
-        users_data = []
-
-        for u in users:
-            approved_roles = UserRole.objects.filter(user=u, is_approved=True).select_related('role')
-            role_names = [r.role.name for r in approved_roles]
-            users_data.append({
-                'user': u,
-                'roles': role_names,
-                'is_active': u.is_active,
-                'is_email_verified': u.is_email_verified,
-            })
-
-        context['users'] = users_data
+        context['users'] = [{
+            'user': u,
+            'roles': [r.role.name for r in UserRole.objects.filter(user=u, is_approved=True).select_related('role')],
+            'is_active': u.is_active,
+            'is_email_verified': u.is_email_verified,
+        } for u in users]
         context['user_count'] = users.count()
 
         new_users = User.objects.filter(is_active=False)
         context['new_users'] = new_users
         context['new_users_count'] = new_users.count()
-        context["width_user_percent"] = new_users.count() * 10
+        context['width_user_percent'] = new_users.count() * 10
 
-        not_verified_users = User.objects.filter(is_email_verified=False)
-        context['not_verified_users'] = not_verified_users
-        context['not_verified_users_count'] = not_verified_users.count()
-        context["width_email_percent"] = not_verified_users.count() * 10
+        not_verified = User.objects.filter(is_email_verified=False)
+        context['not_verified_users'] = not_verified
+        context['not_verified_users_count'] = not_verified.count()
+        context['width_email_percent'] = not_verified.count() * 10
 
         assigned_role_users = User.objects.filter(userrole__is_approved=True).distinct()
         context['assigned_role_users'] = assigned_role_users
         context['assigned_role_users_count'] = assigned_role_users.count()
-        context["width_role_percent"] = assigned_role_users.count() * 10
+        context['width_role_percent'] = assigned_role_users.count() * 10
 
         return context
+
+
 
 
 
