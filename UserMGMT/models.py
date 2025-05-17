@@ -56,6 +56,8 @@ class ModelAccess(models.Model):
 class Role(models.Model):
     name = models.CharField(max_length=100)
     permission = models.ManyToManyField('auth.Permission', blank=True)
+    modules = models.ManyToManyField(Module, blank=True)
+    model_access = models.ManyToManyField(ModelAccess, blank=True)
 
     def __str__(self):
         return self.name

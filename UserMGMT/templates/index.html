@@ -18,27 +18,11 @@
 			<!--navigation-->
 			<ul class="metismenu" id="menu">
 				<li>
-					<a href="javascript:;" class="has-arrow">
+					<a href="{% url 'dashboard' user.username %}" >
 						<div class="parent-icon"><i class='bx bx-home-alt'></i>
 						</div>
 						<div class="menu-title">Dashboard</div>
 					</a>
-					<ul>
-						<li> <a href="index.html"><i class="bx bx-radio-circle"></i>Default</a>
-						</li>
-						<li> <a href="dashboard-eCommerce.html"><i class="bx bx-radio-circle"></i>eCommerce</a>
-						</li>
-						<li> <a href="dashboard-sales.html"><i class="bx bx-radio-circle"></i>Sales</a>
-						</li>
-						<li> <a href="dashboard-analytics.html"><i class="bx bx-radio-circle"></i>Analytics</a>
-						</li>
-						<li> <a href="dashboard-alternate.html"><i class="bx bx-radio-circle"></i>Alternate</a>
-						</li>
-						<li> <a href="dashboard-digital-marketing.html"><i class="bx bx-radio-circle"></i>Digital Marketing</a>
-						</li>
-						<li> <a href="dashboard-human-resources.html"><i class="bx bx-radio-circle"></i>Human Resources</a>
-						</li>
-					</ul>
 				</li>
 				<li>
 					<a href="javascript:;" class="has-arrow">
@@ -49,7 +33,7 @@
 					<ul>
 						<li> <a href="app-emailbox.html"><i class='bx bx-radio-circle'></i>User</a>
 						</li>
-						<li> <a href="app-chat-box.html"><i class='bx bx-radio-circle'></i>Role</a>
+						<li> <a href="{% url 'create_role' %}"><i class='bx bx-radio-circle'></i>Role</a>
 						</li>
 					</ul>
 				</li>
@@ -78,21 +62,21 @@
 								<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="avascript:;" data-bs-toggle="dropdown"><img src="{% static 'assets/images/county/02.png'%}" width="22" alt="">
 								</a>
 								<ul class="dropdown-menu dropdown-menu-end">
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/01.png" width="20" alt=""><span class="ms-2">English</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/01.png'%}" width="20" alt=""><span class="ms-2">English</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/02.png" width="20" alt=""><span class="ms-2">Catalan</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/02.png'%}" width="20" alt=""><span class="ms-2">Catalan</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/03.png" width="20" alt=""><span class="ms-2">French</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/03.png'%}" width="20" alt=""><span class="ms-2">French</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/04.png" width="20" alt=""><span class="ms-2">Belize</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/04.png'%}" width="20" alt=""><span class="ms-2">Belize</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/05.png" width="20" alt=""><span class="ms-2">Colombia</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/05.png'%}" width="20" alt=""><span class="ms-2">Colombia</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/06.png" width="20" alt=""><span class="ms-2">Spanish</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/06.png'%}" width="20" alt=""><span class="ms-2">Spanish</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/07.png" width="20" alt=""><span class="ms-2">Georgian</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/07.png'%}" width="20" alt=""><span class="ms-2">Georgian</span></a>
 									</li>
-									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="assets/images/county/08.png" width="20" alt=""><span class="ms-2">Hindi</span></a>
+									<li><a class="dropdown-item d-flex align-items-center py-2" href="javascript:;"><img src="{% static 'assets/images/county/08.png'%}" width="20" alt=""><span class="ms-2">Hindi</span></a>
 									</li>
 								</ul>
 							</li>
@@ -471,7 +455,7 @@
 							</li>
 							<li><a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-cog fs-5"></i><span>Settings</span></a>
 							</li>
-							<li><a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-home-circle fs-5"></i><span>Dashboard</span></a>
+							<li><a class="dropdown-item d-flex align-items-center" href="{% url 'dashboard' user.username %}"><i class="bx bx-home-circle fs-5"></i><span>Dashboard</span></a>
 							</li>
 							<li><a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-dollar-circle fs-5"></i><span>Earnings</span></a>
 							</li>

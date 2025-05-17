@@ -1,0 +1,66 @@
+<form method="POST">
+    {% csrf_token %}
+    <label>Role Name:</label>
+    <input type="text" name="name" required><br><br>
+
+    {% for module_data in model_permissions_data %}
+        <div>
+            <label>
+                <input type="checkbox" class="module-checkbox" value="{{ module_data.module.id }}" name="modules">
+                {{ module_data.module.name }}
+            </label>
+
+            <div style="margin-left: 20px;">
+                {% for model_info in module_data.models_info %}
+                    <div>
+                        <label>
+                            <input type="checkbox" class="model-checkbox" data-module="{{ module_data.module.id }}" value="{{ model_info.model_access.id }}" name="model_access">
+                            {{ model_info.model_access.model_name }}
+                        </label>
+
+                        <div style="margin-left: 20px;">
+                            {% for perm in model_info.permissions %}
+                                <label>
+                                    <input type="checkbox"
+                                           class="permission-checkbox"
+                                           data-model="{{ model_info.model_access.id }}"
+                                           value="{{ perm.id }}"
+                                           name="permissions">
+                                    {{ perm.name }}
+                                </label><br>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <hr>
+    {% endfor %}
+
+    <button type="submit">Create Role</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // When a module is checked/unchecked
+    document.querySelectorAll('.module-checkbox').forEach(function (moduleCheckbox) {
+        moduleCheckbox.addEventListener('change', function () {
+            const moduleId = this.value;
+            document.querySelectorAll(`.model-checkbox[data-module='${moduleId}']`).forEach(function (modelCheckbox) {
+                modelCheckbox.checked = moduleCheckbox.checked;
+                modelCheckbox.dispatchEvent(new Event('change')); // trigger model logic
+            });
+        });
+    });
+
+    // When a model is checked/unchecked
+    document.querySelectorAll('.model-checkbox').forEach(function (modelCheckbox) {
+        modelCheckbox.addEventListener('change', function () {
+            const modelId = this.value;
+            document.querySelectorAll(`.permission-checkbox[data-model='${modelId}']`).forEach(function (permCheckbox) {
+                permCheckbox.checked = modelCheckbox.checked;
+            });
+        });
+    });
+});
+</script>

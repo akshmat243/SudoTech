@@ -10,11 +10,9 @@ urlpatterns = [
     # path('dashboard/', DashboardView.as_view(), name='dashboard'),
     
     path('dashboard/<str:username>', AdminDashboardView.as_view(), name='dashboard'),
+    path('roles/create/', create_role_view, name='create_role'),
 
-     path('approve_role/<int:user_id>/<int:role_id>/', ApproveRoleView.as_view(), name='approve_role'),
-    path('deactivate_user/<int:user_id>/', DeactivateUserView.as_view(), name='deactivate_user'),
-    path('activate_user/<int:user_id>/', ActivateUserView.as_view(), name='activate_user'),
-    path('update_module_access/<int:role_id>/<str:action>/', UpdateModuleAccessView.as_view(), name='update_module_access'),
+
     
     path('verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
     path('registration-email-sent/', TemplateView.as_view(template_name='emails/email_sent.html'), name='registration_email_sent'),

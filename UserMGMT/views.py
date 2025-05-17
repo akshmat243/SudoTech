@@ -341,69 +341,114 @@ class AdminDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import Permission
+from .serializers import RoleSerializer
+from .models import Module, ModelAccess
+
+
+class RoleCreateView(APIView):
+    template_name = 'roles/create_role.html'
+
+    def get(self, request):
+        context = {
+            'permissions': Permission.objects.all(),
+            'modules': Module.objects.all(),
+            'model_accesses': ModelAccess.objects.all(),
+
+            # No selections on GET
+            'selected_permissions': set(),
+            'selected_modules': set(),
+            'selected_model_access': set(),
+            'data': {}
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        serializer = RoleSerializer(data=request.POST)
+
+        # Get list of selected checkbox values from POST
+        selected_permissions = request.POST.getlist('permission')
+        selected_modules = request.POST.getlist('modules')
+        selected_model_access = request.POST.getlist('model_access')
+
+        if serializer.is_valid():
+            serializer.save()
+            return redirect('role_list')  # Change to your role list view name or URL
+        else:
+            context = {
+                'errors': serializer.errors,
+                'permissions': Permission.objects.all(),
+                'modules': Module.objects.all(),
+                'model_accesses': ModelAccess.objects.all(),
+
+                # Pass back selected items to re-check checkboxes
+                'selected_permissions': set(selected_permissions),
+                'selected_modules': set(selected_modules),
+                'selected_model_access': set(selected_model_access),
+                'data': request.POST,
+            }
+            return render(request, self.template_name, context, status=status.HTTP_400_BAD_REQUEST)
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import Permission, ContentType
+from .models import Module, ModelAccess, Role
+
+@user_passes_test(lambda u: u.is_superuser)
+def create_role_view(request):
+    user=request.user.username
+    exclude_modules = [
+    'jazzmin', 'import_export', 'admin', 'auth', 'contenttypes',
+    'sessions', 'messages', 'staticfiles', 'rest_framework',
+    'token_blacklist', 'sites', 'allauth', 'account',
+    'socialaccount', 'google', 'github'
+    ]
+
+    modules = Module.objects.exclude(name__in=exclude_modules)
+    model_access = ModelAccess.objects.select_related('module').exclude(module__name__in=exclude_modules)
+
+
+    if request.method == 'POST':
+        role_name = request.POST.get('name')
+        selected_modules = request.POST.getlist('modules')
+        selected_model_access = request.POST.getlist('model_access')
+        selected_permissions = request.POST.getlist('permissions')
+
+        # Create Role
+        role = Role.objects.create(name=role_name)
+        role.modules.set(Module.objects.filter(id__in=selected_modules))
+        role.model_access.set(ModelAccess.objects.filter(id__in=selected_model_access))
+        role.permission.set(Permission.objects.filter(id__in=selected_permissions))
+
+        return redirect('dashboard', username=user) 
+
+    # Group model permissions by module
+    model_permissions_data = []
+    for mod in modules:
+        mod_models = model_access.filter(module=mod)
+        models_info = []
+        for model in mod_models:
+            perms = Permission.objects.filter(content_type__model=model.model_name.lower())
+            models_info.append({
+                'model_access': model,
+                'permissions': perms
+            })
+        model_permissions_data.append({
+            'module': mod,
+            'models_info': models_info
+        })
+
+    return render(request, 'roles/create_role.html', {
+        'modules': modules,
+        'model_permissions_data': model_permissions_data
+    })
 
 
 
-
-
-from django.http import JsonResponse
-from django.views import View
-from .models import UserRole, Role, User, ModelAccess, Module
-
-class ApproveRoleView(View):
-    def post(self, request, user_id, role_id):
-        if not request.user.is_staff:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-
-        user = User.objects.get(id=user_id)
-        role = Role.objects.get(id=role_id)
-
-        user_role, created = UserRole.objects.get_or_create(user=user, role=role)
-        user_role.is_approved = True
-        user_role.save()
-
-        return JsonResponse({'message': f'Role {role.name} approved for user {user.username}'})
-
-class ActivateUserView(View):
-    def post(self, request, user_id):
-        if not request.user.is_staff:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-
-        user = User.objects.get(id=user_id)
-        user.is_active = True
-        user.save()
-
-        return JsonResponse({'message': f'User {user.username} has been activated.'})
-
-class DeactivateUserView(View):
-    def post(self, request, user_id):
-        if not request.user.is_staff:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-
-        user = User.objects.get(id=user_id)
-        user.is_active = False
-        user.save()
-
-        return JsonResponse({'message': f'User {user.username} has been deactivated.'})
-
-class UpdateModuleAccessView(View):
-    def post(self, request, role_id, action):
-        if not request.user.is_staff:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-
-        role = Role.objects.get(id=role_id)
-        module_id = request.POST.get('module_id')
-        module = Module.objects.get(id=module_id)
-
-        if action == 'add':
-            ModelAccess.objects.create(role=role, module=module)
-            return JsonResponse({'message': f'Module {module.name} added to role {role.name}'})
-
-        elif action == 'remove':
-            ModelAccess.objects.filter(role=role, module=module).delete()
-            return JsonResponse({'message': f'Module {module.name} removed from role {role.name}'})
-
-        return JsonResponse({'error': 'Invalid action'}, status=400)
 
 
 

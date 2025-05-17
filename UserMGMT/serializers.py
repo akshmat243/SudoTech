@@ -69,28 +69,51 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
+from rest_framework import serializers
+from django.contrib.auth.models import Permission
 from .models import Module, ModelAccess, Role, UserRole
-
 
 class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Module
         fields = ['id', 'name']
 
-
 class ModelAccessSerializer(serializers.ModelSerializer):
-    module = ModuleSerializer(read_only=True)
-    module_id = serializers.PrimaryKeyRelatedField(queryset=Module.objects.all(), source='module', write_only=True)
+    module = ModuleSerializer()
 
     class Meta:
         model = ModelAccess
-        fields = ['id', 'module', 'module_id', 'model_name']
+        fields = ['id', 'module', 'model_name']
 
+class PermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permission
+        fields = ['id', 'codename', 'name', 'content_type']
 
 class RoleSerializer(serializers.ModelSerializer):
+    permission = PermissionSerializer(many=True, read_only=True)
+    modules = ModuleSerializer(many=True, read_only=True)
+    model_access = ModelAccessSerializer(many=True, read_only=True)
+
     class Meta:
         model = Role
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'permission', 'modules', 'model_access']
+        
+class RoleWritableSerializer(serializers.ModelSerializer):
+    permission = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Permission.objects.all(), required=False
+    )
+    modules = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Module.objects.all(), required=False
+    )
+    model_access = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=ModelAccess.objects.all(), required=False
+    )
+
+    class Meta:
+        model = Role
+        fields = ['id', 'name', 'permission', 'modules', 'model_access']
+
 
 
 
