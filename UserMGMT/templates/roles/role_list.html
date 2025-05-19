@@ -1,0 +1,41 @@
+
+<h1>Role List</h1>
+<a href="{% url 'create_role' %}">+</a>
+{% for role in roles %}
+<div class="role-box" style="border: 1px solid #ccc; margin-bottom: 15px; padding: 10px; border-radius: 5px;">
+    <h2>{{ role.name }}</h2>
+
+    <div>
+        <strong>Permissions:</strong>
+        <ul>
+            {% for perm in role.permission %}
+                <li>{{ perm.name }} ({{ perm.codename }})</li>
+            {% empty %}
+                <li>No permissions assigned.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div>
+        <strong>Modules:</strong>
+        <ul>
+            {% for module in role.modules %}
+                <li>{{ module.name }}</li>
+            {% empty %}
+                <li>No modules assigned.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div>
+        <strong>Model Access:</strong>
+        <ul>
+            {% for ma in role.model_access %}
+                <li>{{ ma.model_name }} (Module: {{ ma.module.name }})</li>
+            {% empty %}
+                <li>No model access assigned.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endfor %}

@@ -1,0 +1,131 @@
+{% extends "wrapper.html" %}
+{% load static %}
+{% block UserRole %}
+<!--start page wrapper -->
+<link rel="stylesheet" href="{% static 'assets/css/coustom.css'%}">
+		<div class="page-wrapper">
+			<div class="page-content">
+          <div>
+                <div class="user-create-btn">
+              <p>User</p>
+        <a href="#"><i class="fa-solid fa-plus"></i></a>
+            </div>
+            <div class="user-content-search">
+        <form>
+            <div class="form-grid">
+              <!-- Name -->
+              <div>
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder="Enter Name" />
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label for="email">Email</label>
+                <input type="text" id="email" placeholder="Enter Email" />
+              </div>
+
+              <!-- Role -->
+              <div>
+                <label for="role">Role</label>
+                <select id="role">
+                  <option>All</option>
+                  <option>Client</option>
+                  <option>Staff</option>
+                  <option>vendor</option>
+                </select>
+              </div>
+
+              <!-- Search button -->
+              <button type="submit" class="btn-search" title="Search"></button>
+
+              <!-- Reset button -->
+              <button type="reset"  class="btn-reset"  title="Reset"></button>
+            </div>
+          </form>
+
+          <main class="grid">
+            <!-- CARD TEMPLATE -->
+            <div class="card">
+              <div class="card-upper">
+                <img class="avatar" src="assets/images/avatars/avatar-1.png" alt="avatar" />
+                <div class="info">
+                  <p class="name">Richard Atkinson</p>
+                  <p class="email">keanu2006@gmail.com</p>
+                </div>
+              </div>
+              <div class="card-lower">
+                <div class="actions">
+                  <button><i class="fas fa-pen"></i></button>
+                  <button><i class="fas fa-trash"></i></button>
+                  <button><i class="fas fa-key"></i></button>
+                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
+                </div>
+                <span class="tag staff">Staff</span>
+              </div>
+            </div>
+
+            <!-- Repeat for more cards... -->
+              <div class="card">
+              <div class="card-upper">
+                <img class="avatar" src="assets/images/avatars/avatar-2.png" alt="avatar" />
+                <div class="info">
+                  <p class="name">Richard Atkinson</p>
+                  <p class="email">keanu2006@gmail.com</p>
+                </div>
+              </div>
+              <div class="card-lower">
+                <div class="actions">
+                  <button><i class="fas fa-pen"></i></button>
+                  <button><i class="fas fa-trash"></i></button>
+                  <button><i class="fas fa-key"></i></button>
+                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
+                </div>
+                <span class="tag staff">Staff</span>
+              </div>
+            </div>
+            <!--  -->
+            <div class="card">
+              <div class="card-upper">
+                <img class="avatar" src="assets/images/avatars/avatar-3.png" alt="avatar" />
+                <div class="info">
+                  <p class="name">Rahul Singh</p>
+                  <p class="email">rahul2008@gmail.com</p>
+                </div>
+              </div>
+              <div class="card-lower">
+                <div class="actions">
+                  <button><i class="fas fa-pen"></i></button>
+                  <button><i class="fas fa-trash"></i></button>
+                  <button><i class="fas fa-key"></i></button>
+                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
+                </div>
+                <span class="tag staff">Staff</span>
+              </div>
+            </div>
+            <!--  -->
+            <div class="card">
+              <div class="card-upper">
+                <img class="avatar" src="assets/images/avatars/avatar-4.png" alt="avatar" />
+                <div class="info">
+                  <p class="name">Pramod saini</p>
+                  <p class="email">Pramodsaini189@gmail.com</p>
+                </div>
+              </div>
+              <div class="card-lower">
+                <div class="actions">
+                  <button><i class="fas fa-pen"></i></button>
+                  <button><i class="fas fa-trash"></i></button>
+                  <button><i class="fas fa-key"></i></button>
+                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
+                </div>
+                <span class="tag staff">Staff</span>
+              </div>
+            </div>
+          </main>
+
+            </div>
+          </div>
+    </div>
+  </div>
+ {% endblock %}

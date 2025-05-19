@@ -171,16 +171,25 @@ from django.contrib import messages
 #             request.content_type == 'application/json'
 #         )
         
-
-
 from django.views import View
+from django.views.generic import TemplateView
+from django.contrib.auth import login
+from django.contrib.auth.models import Permission
+from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.shortcuts import render, redirect
-from .serializers import RegisterSerializer
-from rest_framework import status
+from django.http import JsonResponse
+from django.http import Http404
+from django.contrib.auth.mixins import UserPassesTestMixin
+from .serializers import RegisterSerializer, LoginSerializer, UserRoleSerializer, Role, RoleSerializer
+from .models import Module, ModelAccess, Role, UserRole, User
+from .permission import RolePermissionRequiredMixin
+
+
 
 class RegisterView(View):
     def get(self, request):
-        return render(request, 'auth-basic-signup.html')
+        return render(request, 'auth/auth-basic-signup.html')
 
     def post(self, request):
         form_data = {
@@ -196,21 +205,15 @@ class RegisterView(View):
             serializer.save()
             return redirect('registration_email_sent')
 
-        return render(request, 'auth-basic-signup.html', {
+        return render(request, 'auth/auth-basic-signup.html', {
             'form_errors': serializer.errors,
             'form_data': form_data
         })
 
-from django.views import View
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
-from django.urls import reverse
-from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import LoginSerializer
 
 class LoginView(View):
     def get(self, request):
-        return render(request, 'auth-basic-signin.html')
+        return render(request, 'auth/auth-basic-signin.html')
 
     def post(self, request):
         data = request.POST
@@ -234,16 +237,12 @@ class LoginView(View):
         for field_errors in serializer.errors.values():
             error_list.extend(field_errors)
 
-        return render(request, 'auth-basic-signin.html', {
+        return render(request, 'auth/auth-basic-signin.html', {
             'form': error_list,
             'email': data.get('email'),
         })
 
 
-from django.views import View
-from django.shortcuts import redirect
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from django.http import JsonResponse
 
 class LogoutView(View):
     def post(self, request):
@@ -278,30 +277,15 @@ class LogoutView(View):
 
 
 
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
-from django.shortcuts import redirect
-from UserMGMT.models import User, UserRole
-
-from django.http import Http404
-
-class AdminDashboardView(LoginRequiredMixin, TemplateView):
+class AdminDashboardView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
     template_name = 'index.html'
+    required_roles = ['admin']
 
     def dispatch(self, request, *args, **kwargs):
-        # Get username from URL
+        # Check username in URL matches the logged-in user
         username = kwargs.get('username')
         if username != request.user.username:
             raise Http404("You are not authorized to view this dashboard.")
-
-        # Allow access if superuser
-        if request.user.is_superuser:
-            return super().dispatch(request, *args, **kwargs)
-
-        # Check if user has approved 'admin' role
-        user_roles_qs = UserRole.objects.select_related('role').filter(user=request.user, is_approved=True)
-        if not user_roles_qs.exists() or not any(ur.role.name.lower() == 'admin' for ur in user_roles_qs):
-            return redirect('logout')  # or a custom access denied page
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -313,13 +297,12 @@ class AdminDashboardView(LoginRequiredMixin, TemplateView):
         user_roles_qs = UserRole.objects.select_related('role').filter(user=user, is_approved=True)
         context['current_user_roles'] = [ur.role.name for ur in user_roles_qs]
 
-        # Admin metrics
         users = User.objects.filter(is_superuser=False)
         context['users'] = [{
             'user': u,
             'roles': [r.role.name for r in UserRole.objects.filter(user=u, is_approved=True).select_related('role')],
             'is_active': u.is_active,
-            'is_email_verified': u.is_email_verified,
+            'is_email_verified': getattr(u, 'is_email_verified', False),
         } for u in users]
         context['user_count'] = users.count()
 
@@ -341,118 +324,6 @@ class AdminDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import render, redirect
-from django.contrib.auth.models import Permission
-from .serializers import RoleSerializer
-from .models import Module, ModelAccess
-
-
-class RoleCreateView(APIView):
-    template_name = 'roles/create_role.html'
-
-    def get(self, request):
-        context = {
-            'permissions': Permission.objects.all(),
-            'modules': Module.objects.all(),
-            'model_accesses': ModelAccess.objects.all(),
-
-            # No selections on GET
-            'selected_permissions': set(),
-            'selected_modules': set(),
-            'selected_model_access': set(),
-            'data': {}
-        }
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        serializer = RoleSerializer(data=request.POST)
-
-        # Get list of selected checkbox values from POST
-        selected_permissions = request.POST.getlist('permission')
-        selected_modules = request.POST.getlist('modules')
-        selected_model_access = request.POST.getlist('model_access')
-
-        if serializer.is_valid():
-            serializer.save()
-            return redirect('role_list')  # Change to your role list view name or URL
-        else:
-            context = {
-                'errors': serializer.errors,
-                'permissions': Permission.objects.all(),
-                'modules': Module.objects.all(),
-                'model_accesses': ModelAccess.objects.all(),
-
-                # Pass back selected items to re-check checkboxes
-                'selected_permissions': set(selected_permissions),
-                'selected_modules': set(selected_modules),
-                'selected_model_access': set(selected_model_access),
-                'data': request.POST,
-            }
-            return render(request, self.template_name, context, status=status.HTTP_400_BAD_REQUEST)
-
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import Permission, ContentType
-from .models import Module, ModelAccess, Role
-
-@user_passes_test(lambda u: u.is_superuser)
-def create_role_view(request):
-    user=request.user.username
-    exclude_modules = [
-    'jazzmin', 'import_export', 'admin', 'auth', 'contenttypes',
-    'sessions', 'messages', 'staticfiles', 'rest_framework',
-    'token_blacklist', 'sites', 'allauth', 'account',
-    'socialaccount', 'google', 'github'
-    ]
-
-    modules = Module.objects.exclude(name__in=exclude_modules)
-    model_access = ModelAccess.objects.select_related('module').exclude(module__name__in=exclude_modules)
-
-
-    if request.method == 'POST':
-        role_name = request.POST.get('name')
-        selected_modules = request.POST.getlist('modules')
-        selected_model_access = request.POST.getlist('model_access')
-        selected_permissions = request.POST.getlist('permissions')
-
-        # Create Role
-        role = Role.objects.create(name=role_name)
-        role.modules.set(Module.objects.filter(id__in=selected_modules))
-        role.model_access.set(ModelAccess.objects.filter(id__in=selected_model_access))
-        role.permission.set(Permission.objects.filter(id__in=selected_permissions))
-
-        return redirect('dashboard', username=user) 
-
-    # Group model permissions by module
-    model_permissions_data = []
-    for mod in modules:
-        mod_models = model_access.filter(module=mod)
-        models_info = []
-        for model in mod_models:
-            perms = Permission.objects.filter(content_type__model=model.model_name.lower())
-            models_info.append({
-                'model_access': model,
-                'permissions': perms
-            })
-        model_permissions_data.append({
-            'module': mod,
-            'models_info': models_info
-        })
-
-    return render(request, 'roles/create_role.html', {
-        'modules': modules,
-        'model_permissions_data': model_permissions_data
-    })
-
-
-
-
-
-
-
 def verify_email(request, uidb64, token):
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
@@ -469,6 +340,89 @@ def verify_email(request, uidb64, token):
         messages.error(request, 'Verification failed.')
 
     return redirect('register')
+
+
+class UserRoleListView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
+    template_name = 'users/user_role_list.html'
+    required_roles = ['admin']
+    required_permissions = ['view_userrole']
+
+    def get(self, request):
+        user_roles = UserRole.objects.select_related('user', 'role')
+        data = [UserRoleSerializer(ur).data for ur in user_roles]
+        return render(request, self.template_name, {'user_roles': data})
+
+
+
+class RoleListView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
+    template_name = 'roles/role_list.html'
+    required_roles = ['admin']
+    required_permissions = ['view_role']
+
+    def get(self, request):
+        roles = Role.objects.all()
+        serialized_roles = [RoleSerializer(role).data for role in roles]
+        return render(request, self.template_name, {'roles': serialized_roles})
+
+
+
+class CreateRoleView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
+    template_name = 'roles/create_role.html'
+    required_roles = ['admin']
+    required_permissions = ['add_rol']
+
+    exclude_modules = [
+        'jazzmin', 'import_export', 'admin', 'auth', 'contenttypes',
+        'sessions', 'messages', 'staticfiles', 'rest_framework',
+        'token_blacklist', 'sites', 'allauth', 'account',
+        'socialaccount', 'google', 'github'
+    ]
+
+    def get(self, request):
+        modules = Module.objects.exclude(name__in=self.exclude_modules)
+        model_access = ModelAccess.objects.select_related('module').exclude(module__name__in=self.exclude_modules)
+
+        model_permissions_data = []
+        for mod in modules:
+            mod_models = model_access.filter(module=mod)
+            models_info = []
+            for model in mod_models:
+                perms = Permission.objects.filter(content_type__model=model.model_name.lower())
+                models_info.append({
+                    'model_access': model,
+                    'permissions': perms
+                })
+            model_permissions_data.append({
+                'module': mod,
+                'models_info': models_info
+            })
+
+        return render(request, self.template_name, {
+            'modules': modules,
+            'model_permissions_data': model_permissions_data
+        })
+
+    def post(self, request):
+        role_name = request.POST.get('name')
+        selected_modules = request.POST.getlist('modules')
+        selected_model_access = request.POST.getlist('model_access')
+        selected_permissions = request.POST.getlist('permissions')
+
+        role = Role.objects.create(name=role_name)
+
+        if selected_modules:
+            role.modules.set(Module.objects.filter(id__in=selected_modules))
+
+        if selected_model_access:
+            role.model_access.set(ModelAccess.objects.filter(id__in=selected_model_access))
+
+        if selected_permissions:
+            role.permission.set(Permission.objects.filter(id__in=selected_permissions))
+
+        return redirect('role_list')
+
+
+
 
 
 
