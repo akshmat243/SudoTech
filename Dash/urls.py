@@ -22,7 +22,11 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-
+from UserMGMT.views import (
+    DynamicCreateView, DynamicDeleteView, DynamicListView, DynamicUpdateView
+)
+    
+    
 urlpatterns = [
     path('admin/', admin.site.urls),
     
@@ -30,6 +34,12 @@ urlpatterns = [
     
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    path('perms/<str:app_label>/<str:model_name>/', DynamicListView.as_view(), name='dynamic_list'),
+    path('perms/<str:app_label>/<str:model_name>/add/', DynamicCreateView.as_view(), name='dynamic_add'),
+    path('perms/<str:app_label>/<str:model_name>/<int:pk>/edit/', DynamicUpdateView.as_view(), name='dynamic_edit'),
+    path('perms/<str:app_label>/<str:model_name>/<int:pk>/delete/', DynamicDeleteView.as_view(), name='dynamic_delete'),
+
 ]
 
 for app in settings.INSTALLED_APPS:

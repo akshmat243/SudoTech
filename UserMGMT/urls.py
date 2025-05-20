@@ -15,8 +15,6 @@ urlpatterns = [
     path('roles/create/', CreateRoleView.as_view(), name='create_role'),
     path('roles/', RoleListView.as_view(), name='role_list'),
 
-
-    
     path('verify-email/<uidb64>/<token>/', verify_email, name='verify-email'),
     path('registration-email-sent/', TemplateView.as_view(template_name='emails/email_sent.html'), name='registration_email_sent'),
 
@@ -24,5 +22,6 @@ urlpatterns = [
     path('forgot-password/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('reset-password/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='auth/auth-basic-reset-password.html'), name='password_reset_confirm'),
     path('reset-password/complete/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-
+    
 ]
+

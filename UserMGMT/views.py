@@ -179,11 +179,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.http import Http404
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
+from django.apps import apps
 from .serializers import RegisterSerializer, LoginSerializer, UserRoleSerializer, Role, RoleSerializer
 from .models import Module, ModelAccess, Role, UserRole, User
 from .permission import RolePermissionRequiredMixin
+
 
 
 
@@ -277,25 +278,84 @@ class LogoutView(View):
 
 
 
+
 class AdminDashboardView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
     template_name = 'index.html'
     required_roles = ['admin']
 
     def dispatch(self, request, *args, **kwargs):
-        # Check username in URL matches the logged-in user
         username = kwargs.get('username')
         if username != request.user.username:
-            raise Http404("You are not authorized to view this dashboard.")
+            raise PermissionDenied("You are not authorized to view this dashboard.")
 
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-
         context['current_username'] = user.username
+
+        # Get all user roles and permissions
         user_roles_qs = UserRole.objects.select_related('role').filter(user=user, is_approved=True)
+        role_permissions = set(
+            perm for ur in user_roles_qs for perm in ur.role.permission.all()
+        )
+        role_permission_codenames = set(perm.codename for perm in role_permissions)  # <-- add this
+
+        # Superuser: show all apps, models, permissions
+        app_list = []
+        for app_config in apps.get_app_configs():
+            models = []
+            for model in app_config.get_models():
+                model_name = model._meta.model_name
+
+                crud_permission_codenames = {
+                    f"add_{model_name}",
+                    f"view_{model_name}",
+                    f"change_{model_name}",
+                    f"delete_{model_name}",
+                }
+
+                model_permissions = Permission.objects.filter(
+                    content_type__app_label=app_config.label,
+                    content_type__model=model_name,
+                    codename__in=crud_permission_codenames
+                )
+
+                if not user.is_superuser:
+                    model_permissions = [perm for perm in model_permissions if perm in role_permissions]
+
+                if model_permissions:
+                    perms_list = []
+                    for perm in model_permissions:
+                        try:
+                            model_name_from_perm = perm.codename.split('_', 1)[1]
+                        except IndexError:
+                            model_name_from_perm = model_name
+
+                        perms_list.append({
+                            'name': perm.name,
+                            'codename': perm.codename,
+                            'model_name_from_perm': model_name_from_perm,
+                        })
+
+                    models.append({
+                        'model_name': model_name,
+                        'permissions': perms_list,
+                    })
+
+            if models:
+                app_list.append({
+                    'app_label': app_config.label,
+                    'models': models
+                })
+
+
+        context['is_superuser'] = user.is_superuser
+        context['app_list'] = app_list
+
         context['current_user_roles'] = [ur.role.name for ur in user_roles_qs]
+        context['assigned_permissions'] = role_permission_codenames
 
         users = User.objects.filter(is_superuser=False)
         context['users'] = [{
@@ -322,6 +382,8 @@ class AdminDashboardView(LoginRequiredMixin, RolePermissionRequiredMixin, Templa
         context['width_role_percent'] = assigned_role_users.count() * 10
 
         return context
+
+
 
 
 def verify_email(request, uidb64, token):
@@ -422,6 +484,167 @@ class CreateRoleView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
         return redirect('role_list')
 
 
+
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.urls import reverse_lazy
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ImproperlyConfigured
+from django.forms import modelform_factory
+from django.apps import apps
+from django.http import Http404
+
+
+class DynamicListView(LoginRequiredMixin, RolePermissionRequiredMixin, ListView):
+    template_name = 'dynamic/list.html'
+    raise_exception = True
+
+    def get_model(self):
+        app_label = self.kwargs['app_label']
+        model_name = self.kwargs['model_name']
+        model = apps.get_model(app_label, model_name)
+
+        if model is None:
+            raise Http404(f"Model '{model_name}' in app '{app_label}' not found.")
+
+        return model
+
+    def get_queryset(self):
+        model = self.get_model()
+        return model.objects.all()
+
+    def get_permission_required(self):
+        app_label = self.kwargs['app_label']
+        model_name = self.kwargs['model_name'].lower()  # Always lowercase for permissions
+        return [f"{app_label}.view_{model_name}"]
+    
+    def has_permission(self):
+        if self.request.user.is_superuser:
+            return True
+        return super().has_permission()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        model = self.get_model()
+        context['model_name'] = model._meta.verbose_name_plural.title()
+        context['fields'] = [field.name for field in model._meta.fields]
+        return context
+
+
+
+
+class DynamicCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, CreateView):
+    template_name = 'dynamic/form.html'
+    raise_exception = True
+
+    def get_model(self):
+        app_label = self.kwargs['app_label']
+        model_name = self.kwargs['model_name']
+        model = apps.get_model(app_label, model_name)
+        if model is None:
+            raise ImproperlyConfigured(f"Model '{app_label}.{model_name}' not found.")
+        return model
+
+    def get_form_class(self):
+        model = self.get_model()
+        return modelform_factory(model, fields='__all__')
+
+    def get_permission_required(self):
+        return [f"{self.kwargs['app_label']}.add_{self.kwargs['model_name']}"]
+    
+    def has_permission(self):
+        if self.request.user.is_superuser:
+            return True
+        return super().has_permission()
+
+    def get_success_url(self):
+        return f"/perms/{self.kwargs['app_label']}/{self.kwargs['model_name']}/"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['model_name'] = self.kwargs['model_name']
+        return context
+
+
+
+
+
+class DynamicUpdateView(LoginRequiredMixin, RolePermissionRequiredMixin, UpdateView):
+    template_name = 'dynamic/form.html'
+    raise_exception = True
+
+    def get_model(self):
+        app_label = self.kwargs['app_label']
+        model_name = self.kwargs['model_name']
+        model = apps.get_model(app_label, model_name)
+        if model is None:
+            raise ImproperlyConfigured(f"Model '{app_label}.{model_name}' not found.")
+        return model
+
+    def get_object(self, queryset=None):
+        model = self.get_model()
+        return get_object_or_404(model, pk=self.kwargs['pk'])
+
+    def get_form_class(self):
+        model = self.get_model()
+        return modelform_factory(model, fields='__all__')
+
+    def get_permission_required(self):
+        return [f"{self.kwargs['app_label']}.change_{self.kwargs['model_name']}"]
+    
+    def has_permission(self):
+        if self.request.user.is_superuser:
+            return True
+        return super().has_permission()
+
+    def get_success_url(self):
+        return reverse_lazy('dynamic_list', kwargs={
+            'app_label': self.kwargs['app_label'],
+            'model_name': self.kwargs['model_name']
+        })
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['model_name'] = self.kwargs['model_name']
+        return context
+
+
+
+
+class DynamicDeleteView(LoginRequiredMixin, RolePermissionRequiredMixin, DeleteView):
+    template_name = 'dynamic/confirm_delete.html'
+    raise_exception = True
+
+    def get_model(self):
+        app_label = self.kwargs['app_label']
+        model_name = self.kwargs['model_name']
+        model = apps.get_model(app_label, model_name)
+        if model is None:
+            raise ImproperlyConfigured(f"Model '{app_label}.{model_name}' not found.")
+        return model
+
+    def get_object(self, queryset=None):
+        model = self.get_model()
+        return get_object_or_404(model, pk=self.kwargs['pk'])
+
+    def get_permission_required(self):
+        return [f"{self.kwargs['app_label']}.delete_{self.kwargs['model_name']}"]
+    
+    def has_permission(self):
+        if self.request.user.is_superuser:
+            return True
+        return super().has_permission()
+
+    def get_success_url(self):
+        return reverse_lazy('dynamic_list', kwargs={
+            'app_label': self.kwargs['app_label'],
+            'model_name': self.kwargs['model_name']
+        })
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['model_name'] = self.kwargs['model_name']
+        return context
 
 
 

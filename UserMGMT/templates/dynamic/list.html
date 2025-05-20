@@ -1,0 +1,22 @@
+{% load custom_tags %}
+
+<h2>{{ model_name }}</h2>
+
+<table border="1">
+    <thead>
+        <tr>
+            {% for field in fields %}
+                <th>{{ field }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in object_list %}
+            <tr>
+                {% for field in fields %}
+                    <td>{{ obj|get_attr:field }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

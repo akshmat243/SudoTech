@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load custom_tags %}
 {% block wrapper %}
 
     <!--wrapper-->
@@ -38,7 +39,35 @@
 						</li>
 					</ul>
 				</li>
-				<li class="menu-label">UI Elements</li>
+				<li class="menu-label">Pages</li>
+				{% for module in app_list %}
+				<li>
+					<a class="has-arrow" href="javascript:;">
+						<div class="parent-icon"><i class="bx bx-lock"></i>
+						</div>
+						<div class="menu-title">{{ module.app_label|title }}</div>
+					</a>
+					<ul>
+						{% for model in module.models %}
+						<li><a class="has-arrow" href="javascript:;"><i class='bx bx-radio-circle'></i>{{ model.model_name }}</a>
+							<ul>
+								{% for perm in model.permissions %}
+									{% if perm.codename|startswith:"add_" %}
+										<li><a href="{% url 'dynamic_add' app_label=module.app_label model_name=model.model_name %}"><i class='bx bx-radio-circle'></i>{{ perm.name }}</a></li>
+									{% elif perm.codename|startswith:"view_" %}
+										<li><a href="{% url 'dynamic_list' app_label=module.app_label model_name=model.model_name %}"><i class='bx bx-radio-circle'></i>{{ perm.name }}</a></li>
+									{% elif perm.codename|startswith:"change_" %}
+										<li><a href="{% url 'dynamic_list' app_label=module.app_label model_name=model.model_name %}"><i class='bx bx-radio-circle'></i>{{ perm.name }}</a></li>
+									{% elif perm.codename|startswith:"delete_" %}
+										<li><a href="{% url 'dynamic_list' app_label=module.app_label model_name=model.model_name %}"><i class='bx bx-radio-circle'></i>{{ perm.name }}</a></li>
+									{% endif %}
+								{% endfor %}
+							</ul>
+						</li>
+						{% endfor %}
+					</ul>
+				</li>
+				{% endfor %}
 			</ul>
 		</div>
 		<!--start header -->
