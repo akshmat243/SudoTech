@@ -1,0 +1,48 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ignore Django database and local settings
+*.sqlite3
+*.log
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+
+# Ignore media and static files collected during deployment
+/media/
+staticfiles/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyd
+*.pdb
+
+# Ignore test coverage reports
+htmlcov/
+.coverage
+
+# Ignore compiled files
+*.egg-info/
+*.egg
+
+# Ignore node_modules if using frontend tools
+node_modules/
+
+# Ignore migrations (optional, if you want to regenerate per environment)
+# ** Only ignore if you know what you're doing **
+# */migrations/
+# !*/migrations/__init__.py
