@@ -411,6 +411,7 @@ class UserRoleListView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
 
     def get(self, request):
         user_roles = UserRole.objects.select_related('user', 'role')
+        print(user_roles)
         data = [UserRoleSerializer(ur).data for ur in user_roles]
         return render(request, self.template_name, {'user_roles': data})
 
@@ -426,12 +427,13 @@ class RoleListView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
         serialized_roles = [RoleSerializer(role).data for role in roles]
         return render(request, self.template_name, {'roles': serialized_roles})
 
+from django.contrib.contenttypes.models import ContentType
 
 
 class CreateRoleView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
     template_name = 'roles/create_role.html'
     required_roles = ['admin']
-    required_permissions = ['add_rol']
+    required_permissions = ['add_role']
 
     exclude_modules = [
         'jazzmin', 'import_export', 'admin', 'auth', 'contenttypes',
@@ -445,15 +447,27 @@ class CreateRoleView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
         model_access = ModelAccess.objects.select_related('module').exclude(module__name__in=self.exclude_modules)
 
         model_permissions_data = []
+
         for mod in modules:
             mod_models = model_access.filter(module=mod)
             models_info = []
+
             for model in mod_models:
-                perms = Permission.objects.filter(content_type__model=model.model_name.lower())
+                content_type = ContentType.objects.filter(
+                    app_label=mod.name,
+                    model=model.model_name.lower()
+                ).first()
+
+                if content_type:
+                    perms = Permission.objects.filter(content_type=content_type).distinct()
+                else:
+                    perms = Permission.objects.none()
+
                 models_info.append({
                     'model_access': model,
                     'permissions': perms
                 })
+
             model_permissions_data.append({
                 'module': mod,
                 'models_info': models_info
@@ -463,6 +477,7 @@ class CreateRoleView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
             'modules': modules,
             'model_permissions_data': model_permissions_data
         })
+
 
     def post(self, request):
         role_name = request.POST.get('name')

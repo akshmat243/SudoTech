@@ -118,12 +118,13 @@ class RoleWritableSerializer(serializers.ModelSerializer):
 
 
 class UserRoleSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='user', write_only=True)
-
-    role = RoleSerializer(read_only=True)
-    role_id = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), source='role', write_only=True)
+    user_name = serializers.SerializerMethodField()
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    role_name = serializers.CharField(source='role.name', read_only=True)
 
     class Meta:
         model = UserRole
-        fields = ['id', 'user', 'user_id', 'role', 'role_id']
+        fields = ['id', 'user_name', 'user_email', 'role_name']
+
+    def get_user_name(self, obj):
+        return f"{obj.user.name}"

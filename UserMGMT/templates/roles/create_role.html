@@ -1,66 +1,168 @@
+{% load static %}
+    <link rel="stylesheet" href="{% static 'assets/css/coustom.css' %}">
+   {% comment %} <link rel="stylesheet" href="coustom.css"> {% endcomment %}
+
 <form method="POST">
     {% csrf_token %}
-    <label>Role Name:</label>
-    <input type="text" name="name" required><br><br>
-
-    {% for module_data in model_permissions_data %}
-        <div>
-            <label>
-                <input type="checkbox" class="module-checkbox" value="{{ module_data.module.id }}" name="modules">
-                {{ module_data.module.name }}
-            </label>
-
-            <div style="margin-left: 20px;">
-                {% for model_info in module_data.models_info %}
-                    <div>
-                        <label>
-                            <input type="checkbox" class="model-checkbox" data-module="{{ module_data.module.id }}" value="{{ model_info.model_access.id }}" name="model_access">
-                            {{ model_info.model_access.model_name }}
-                        </label>
-
-                        <div style="margin-left: 20px;">
-                            {% for perm in model_info.permissions %}
-                                <label>
-                                    <input type="checkbox"
-                                           class="permission-checkbox"
-                                           data-model="{{ model_info.model_access.id }}"
-                                           value="{{ perm.id }}"
-                                           name="permissions">
-                                    {{ perm.name }}
-                                </label><br>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
+    <div class="container d-flex p-0">
+        <div class="sidebar">
+            <h2>Role Name</h2>
+            <div class="form-group">
+                <label for="roleName"><strong>Name*</strong></label>
+                <input type="text" id="roleName" placeholder="Enter Role Name" name="name" required>
+            </div><hr>
+            <div class="sidebar-scroll">
+                <ul>
+                    {% for module_data in model_permissions_data %}
+                    <li data-target="{{ module_data.module.name }}" class="{% if forloop.first %}active{% endif %}">
+                        {{ module_data.module.name }}
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-        <hr>
-    {% endfor %}
 
-    <button type="submit">Create Role</button>
+
+        <div class="main">
+            
+            {% for module_data in model_permissions_data %}
+            <section id="{{ module_data.module.name }}" class="main-section {% if forloop.first %}active{% endif %}">
+                <h3>{{ module_data.module.name }}</h3>
+                <label>
+                <input type="checkbox" id="toggleAll-{{ module_data.module.id }}" class="label">
+                Assign {{ module_data.module.name }} Service Permission to Roles
+                </label>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Permissions</th>
+                        </tr>
+                    </thead>
+                    {% for model_info in module_data.models_info %}
+                    <tbody id="permissionTable-{{ module_data.module.id }}">
+
+                        <tr class="permission-row">
+                            <td><input type="checkbox" class="module-checkbox" data-module="{{ module_data.module.id }}" value="{{ model_info.model_access.id }}" name="model_access"> {{ model_info.model_access.model_name }}</td>
+                            {% for perm in model_info.permissions %}
+                            <td><input type="checkbox" data-model="{{ model_info.model_access.id }}" value="{{ perm.id }}" name="permissions"> {{ perm.name }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                    {% endfor %}
+                </table>
+                <!-- Footer buttons -->
+                <div class="footer-buttons">
+                    <button class="btn btn-create" onclick="createRole()">Create</button>
+                    <button class="btn btn-cancel" onclick="cancelRole()">Cancel</button>
+                    
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+    </div>
 </form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // When a module is checked/unchecked
-    document.querySelectorAll('.module-checkbox').forEach(function (moduleCheckbox) {
+  // Sidebar tab logic
+  document.querySelectorAll('.sidebar ul li').forEach(li => {
+    li.addEventListener('click', () => {
+      const target = li.dataset.target;
+
+      // Remove active from all and set to clicked
+      document.querySelectorAll('.sidebar ul li').forEach(x => x.classList.remove('active'));
+      li.classList.add('active');
+
+      document.querySelectorAll('.main-section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(target).classList.add('active');
+    });
+  });
+
+  function cancelRole() {
+    if (confirm("Are you sure you want to cancel? Changes will not be saved.")) {
+      location.reload();
+    }
+  }
+
+  function createRole() {
+    const roleName = document.getElementById("roleName").value.trim();
+    if (!roleName) {
+      alert("Please enter a role name.");
+      return;
+    }
+    alert(`Role "${roleName}" created with selected permissions.`);
+  }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // When a Module checkbox is toggled
+    document.querySelectorAll('.module-checkbox').forEach(moduleCheckbox => {
         moduleCheckbox.addEventListener('change', function () {
-            const moduleId = this.value;
-            document.querySelectorAll(`.model-checkbox[data-module='${moduleId}']`).forEach(function (modelCheckbox) {
-                modelCheckbox.checked = moduleCheckbox.checked;
-                modelCheckbox.dispatchEvent(new Event('change')); // trigger model logic
-            });
+            const modelId = this.value;
+            const isChecked = this.checked;
+
+            // Toggle all permission checkboxes that match this model ID
+            document.querySelectorAll(`input[data-model='${modelId}']`)
+                    .forEach(cb => cb.checked = isChecked);
         });
     });
 
-    // When a model is checked/unchecked
-    document.querySelectorAll('.model-checkbox').forEach(function (modelCheckbox) {
-        modelCheckbox.addEventListener('change', function () {
-            const modelId = this.value;
-            document.querySelectorAll(`.permission-checkbox[data-model='${modelId}']`).forEach(function (permCheckbox) {
-                permCheckbox.checked = modelCheckbox.checked;
-            });
+    // When a "Select All for Module" checkbox is toggled
+    document.querySelectorAll('[id^="toggleAll-"]').forEach(toggleAll => {
+        toggleAll.addEventListener('change', function () {
+            const moduleId = this.id.split('-')[1];
+            const isChecked = this.checked;
+
+            // Toggle all model checkboxes for this module
+            document.querySelectorAll(`.module-checkbox[data-module='${moduleId}']`)
+                    .forEach(cb => {
+                        cb.checked = isChecked;
+
+                        // Trigger change to also check/uncheck permissions
+                        cb.dispatchEvent(new Event('change'));
+                    });
         });
     });
 });
 </script>
+
+<style>
+.sidebar-scroll {
+    max-height: 500px; /* Set as needed */
+    overflow-y: auto;
+    padding-right: 5px;
+    position: relative;
+}
+
+/* Hide scrollbar by default */
+.sidebar-scroll::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+}
+
+/* Hide scrollbar track */
+.sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Scrollbar thumb (handle) */
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 10px;
+}
+
+/* Show scrollbar on hover */
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.4); /* Adjust color for theme */
+}
+
+/* Firefox compatibility */
+.sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+.sidebar-scroll:hover {
+    scrollbar-color: rgba(255,255,255,0.4) transparent;
+}
+</style>
+

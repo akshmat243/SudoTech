@@ -2,6 +2,47 @@
 {% load static %}
 {% block UserRole %}
 <!--start page wrapper -->
+		<div class="page-wrapper">
+			<div class="page-content">
+        <a href="{% url 'create_role' %}">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 row-cols-xl-5 g-3 justify-content-end">
+            <div class="col d-flex justify-content-end">
+                <div class="d-flex align-items-center theme-icons shadow-sm p-2 cursor-pointer rounded">
+                    <div class="font-18 text-white">
+                        <i class="lni lni-plus"></i>
+                    </div>
+                </div>
+            </div>
+        </div></a>
+				<div class="row">
+					<div class="col-12 col-lg-9 mx-auto">
+            {% for user in user_roles %}
+						<div class="card radius-10">
+							<div class="card-body">
+								<div class="d-flex align-items-center">
+									<img src="{% static 'default.jpg' %}" class="rounded-circle p-1 border" width="90" height="90" alt="...">
+									<div class="flex-grow-1 ms-3">
+										<h5 class="mt-0">{{ user.user_name}}</h5>
+										<p class="mb-0">{{ user.user_email}}</p>
+									</div>
+								</div>
+							</div>
+						</div>
+            {% endfor %}
+					</div>
+				</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+{% comment %} <!--start page wrapper -->
 <link rel="stylesheet" href="{% static 'assets/css/coustom.css'%}">
 		<div class="page-wrapper">
 			<div class="page-content">
@@ -127,5 +168,5 @@
             </div>
           </div>
     </div>
-  </div>
+  </div> {% endcomment %}
  {% endblock %}
