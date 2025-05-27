@@ -3,8 +3,8 @@
 {% block RoleList %}
 <div class="page-wrapper">
 	<div class="page-content">
-        <a href="{% url 'create_role' %}">
         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 row-cols-xl-5 g-3 justify-content-end">
+            <a href="{% url 'create_role' %}">
             <div class="col d-flex justify-content-end">
                 <div class="d-flex align-items-center theme-icons shadow-sm p-2 cursor-pointer rounded">
                     <div class="font-18 text-white">
@@ -12,7 +12,8 @@
                     </div>
                 </div>
             </div>
-        </div></a>
+            </a>
+        </div>
         <div class="d-flex flex-wrap gap-3 mt-3">
         {% for role in roles %}
         <div class="card" style="width:518px;">
@@ -21,15 +22,27 @@
                     <h4 class="mb-0">{{ role.name }}</h4>
                 </div>
                 <hr>
-                <div class="scroll-permissions">
-                    {% for perm in role.permission %}
-                        <div class="chip mx-0 mt-0 mb-1 pl-1 pr-1">
-                            <small>{{ perm.codename }}</small>
-                        </div>
-                    {% empty %}
-                        <div class="chip">No permissions assigned.</div>
-                    {% endfor %}
-                </div>
+                <div class="scroll-permissions-container position-relative">
+    <div class="scroll-permissions" id="permissionsList">
+        {% for perm in role.permission %}
+            <div class="chip mx-0 mt-0 mb-1 pl-1 pr-1">
+                <small>{{ perm.codename }}</small>
+            </div>
+        {% empty %}
+            <div class="chip">No permissions assigned.</div>
+        {% endfor %}
+
+        <!-- Collapse icon shown inside scroll when expanded -->
+        <div class="collapse-trigger mr-2" onclick="collapseScroll(this)">▲</div>
+
+        <!-- Show more (three dots) trigger -->
+        <div class="show-more-overlay" onclick="enableScroll(this)">...</div>
+    </div>
+</div>
+
+
+
+
             </div>
         </div>
         {% endfor %}
@@ -45,49 +58,93 @@
 	<script src="{% static 'assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js' %}"></script>
 	<!--app JS-->
 	<script src="{% static 'assets/js/app.js' %}"></script>
+<script>
+function enableScroll(el) {
+    const container = el.parentElement;
+    container.classList.add('scrollable');         // Enable scroll
+    el.style.display = 'none';                     // Hide "..."
+}
+
+function collapseScroll(el) {
+    const container = el.parentElement;
+    container.classList.remove('scrollable');      // Disable scroll
+    const showMore = container.querySelector('.show-more-overlay');
+    if (showMore) {
+        showMore.style.display = 'block';          // Show "..." again
+    }
+
+    // Scroll to top when collapsing
+    container.scrollTop = 0;
+}
+
+// Only show "..." if needed
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.scroll-permissions').forEach(container => {
+        const overlay = container.querySelector('.show-more-overlay');
+        if (container.scrollHeight > container.clientHeight + 2) {
+            overlay.style.display = 'block';
+        }
+    });
+});
+</script>
+
+
+
+
 <style>
 .scroll-permissions {
-    max-height: 8rem;
+    max-height: calc(2.8em * 3);
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Enable scrolling without changing height */
+.scroll-permissions.scrollable {
     overflow-y: auto;
-    scrollbar-width: none; /* Firefox - hides scrollbar initially */
 }
 
-/* Chrome, Edge, Safari */
-.scroll-permissions::-webkit-scrollbar {
-    width: 6px;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-/* Hide the track and buttons (arrows) */
-.scroll-permissions::-webkit-scrollbar-track,
-.scroll-permissions::-webkit-scrollbar-button {
-    background: transparent;
-    height: 0;
+/* Dots overlay (when collapsed) */
+.show-more-overlay {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: right;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 6px 0;
     display: none;
 }
 
-/* Scrollbar thumb (handle) */
+/* Collapse button (inside scroll) */
+.collapse-trigger {
+    width: 100%;
+    color: rgba(0,0,0,0.2);
+    text-align: right;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 0;
+    display: none;
+    margin-top: auto;
+}
+
+.scrollable .collapse-trigger {
+    display: block;
+}
+
+/* Scrollbar (optional styling) */
+.scroll-permissions::-webkit-scrollbar {
+    width: 6px;
+}
+
 .scroll-permissions::-webkit-scrollbar-thumb {
-    background-color: rgba(136, 136, 136, 0.0); /* hidden initially */
-    border-radius: 10px;
-    transition: background-color 0.3s;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 3px;
 }
 
-/* On hover: show scrollbar thumb */
-.scroll-permissions:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(136, 136, 136, 0.7);
-}
-
-.scroll-permissions:hover::-webkit-scrollbar {
-    opacity: 1;
-}
-
-/* Firefox specific: show scrollbar on hover */
-.scroll-permissions:hover {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(136,136,136,0.7) transparent;
-}
 </style>
 
 {% endblock %}

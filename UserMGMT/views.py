@@ -276,9 +276,6 @@ class LogoutView(View):
             request.content_type == 'application/json'
         )
 
-
-
-
 class AdminDashboardView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
     template_name = 'index.html'
     required_roles = ['admin']
@@ -287,76 +284,12 @@ class AdminDashboardView(LoginRequiredMixin, RolePermissionRequiredMixin, Templa
         username = kwargs.get('username')
         if username != request.user.username:
             raise PermissionDenied("You are not authorized to view this dashboard.")
-
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        context['current_username'] = user.username
 
-        # Get all user roles and permissions
-        user_roles_qs = UserRole.objects.select_related('role').filter(user=user, is_approved=True)
-        role_permissions = set(
-            perm for ur in user_roles_qs for perm in ur.role.permission.all()
-        )
-        role_permission_codenames = set(perm.codename for perm in role_permissions)  # <-- add this
-
-        # Superuser: show all apps, models, permissions
-        app_list = []
-        for app_config in apps.get_app_configs():
-            models = []
-            for model in app_config.get_models():
-                model_name = model._meta.model_name
-
-                crud_permission_codenames = {
-                    f"add_{model_name}",
-                    f"view_{model_name}",
-                    f"change_{model_name}",
-                    f"delete_{model_name}",
-                }
-
-                model_permissions = Permission.objects.filter(
-                    content_type__app_label=app_config.label,
-                    content_type__model=model_name,
-                    codename__in=crud_permission_codenames
-                )
-
-                if not user.is_superuser:
-                    model_permissions = [perm for perm in model_permissions if perm in role_permissions]
-
-                if model_permissions:
-                    perms_list = []
-                    for perm in model_permissions:
-                        try:
-                            model_name_from_perm = perm.codename.split('_', 1)[1]
-                        except IndexError:
-                            model_name_from_perm = model_name
-
-                        perms_list.append({
-                            'name': perm.name,
-                            'codename': perm.codename,
-                            'model_name_from_perm': model_name_from_perm,
-                        })
-
-                    models.append({
-                        'model_name': model_name,
-                        'permissions': perms_list,
-                    })
-
-            if models:
-                app_list.append({
-                    'app_label': app_config.label,
-                    'models': models
-                })
-
-
-        context['is_superuser'] = user.is_superuser
-        context['app_list'] = app_list
-
-        context['current_user_roles'] = [ur.role.name for ur in user_roles_qs]
-        context['assigned_permissions'] = role_permission_codenames
-
+        # Dashboard-specific data only:
         users = User.objects.filter(is_superuser=False)
         context['users'] = [{
             'user': u,
@@ -382,6 +315,7 @@ class AdminDashboardView(LoginRequiredMixin, RolePermissionRequiredMixin, Templa
         context['width_role_percent'] = assigned_role_users.count() * 10
 
         return context
+
 
 
 

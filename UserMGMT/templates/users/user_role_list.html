@@ -1,172 +1,49 @@
 {% extends "wrapper.html" %}
 {% load static %}
 {% block UserRole %}
-<!--start page wrapper -->
-		<div class="page-wrapper">
-			<div class="page-content">
-        <a href="{% url 'create_role' %}">
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 row-cols-xl-5 g-3 justify-content-end">
-            <div class="col d-flex justify-content-end">
-                <div class="d-flex align-items-center theme-icons shadow-sm p-2 cursor-pointer rounded">
-                    <div class="font-18 text-white">
-                        <i class="lni lni-plus"></i>
-                    </div>
-                </div>
-            </div>
-        </div></a>
-				<div class="row">
-					<div class="col-12 col-lg-9 mx-auto">
-            {% for user in user_roles %}
-						<div class="card radius-10">
-							<div class="card-body">
-								<div class="d-flex align-items-center">
-									<img src="{% static 'default.jpg' %}" class="rounded-circle p-1 border" width="90" height="90" alt="...">
-									<div class="flex-grow-1 ms-3">
-										<h5 class="mt-0">{{ user.user_name}}</h5>
-										<p class="mb-0">{{ user.user_email}}</p>
-									</div>
-								</div>
-							</div>
-						</div>
-            {% endfor %}
-					</div>
-				</div>
+
+<div class="page-wrapper">
+	<div class="page-content">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 row-cols-xl-5 g-3 justify-content-end">
+      <a href="#">
+      <div class="col d-flex justify-content-end">
+        <div class="d-flex align-items-center theme-icons shadow-sm p-2 cursor-pointer rounded">
+          <div class="font-18 text-white">
+            <i class="lni lni-plus"></i>
+          </div>
+        </div>
       </div>
+      </a>
     </div>
+    <div class="row row-cols-1 row-cols-lg-3">
+            {% for ur in user_roles %}
+						<div class="col">
+              <div class="card p-3 position-relative" style="min-height: 100px;">
+                <div class="row g-0">
+                  <div class="col-auto d-flex">
+                    <img src="{% static 'default.jpg' %}" class="user-img rounded mb-2" alt="user avatar">
+                    <div class="col mx-4">
+                      <h6 class="mb-1">{{ ur.user_name }}</h6>
+                      <small>{{ ur.user_email }}</small>
+                    </div>
+                  </div>
+                </div><hr class="m-1">
+                <div class="col">
+                  <div class="mt-2">
+                    <i class="bx bx-edit-alt fs-9 me-3 border rounded px-1" title="Edit"></i>
+                    <i class="bx bx-trash text-danger fs-9 me-3  border rounded px-1" title="Delete"></i>
+                    <i class="bx bx-key text-warning fs-9 me-3  border rounded px-1" title="Reset Password"></i>
+                    <i class="bx bx-log-out text-dark fs-9 border rounded px-1" title="Login Disable"></i>
+                  </div>
+                </div>
+                <div class="position-absolute bottom-0 end-0 m-3">
+                  <button class="btn btn-success btn-sm px-3 py-0"><small>{{ur.role_name}}</small></button>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+		</div>
   </div>
 </div>
 
-
-
-
-
-
-
-{% comment %} <!--start page wrapper -->
-<link rel="stylesheet" href="{% static 'assets/css/coustom.css'%}">
-		<div class="page-wrapper">
-			<div class="page-content">
-          <div>
-                <div class="user-create-btn">
-              <p>User</p>
-        <a href="#"><i class="fa-solid fa-plus"></i></a>
-            </div>
-            <div class="user-content-search">
-        <form>
-            <div class="form-grid">
-              <!-- Name -->
-              <div>
-                <label for="name">Name</label>
-                <input type="text" id="name" placeholder="Enter Name" />
-              </div>
-
-              <!-- Email -->
-              <div>
-                <label for="email">Email</label>
-                <input type="text" id="email" placeholder="Enter Email" />
-              </div>
-
-              <!-- Role -->
-              <div>
-                <label for="role">Role</label>
-                <select id="role">
-                  <option>All</option>
-                  <option>Client</option>
-                  <option>Staff</option>
-                  <option>vendor</option>
-                </select>
-              </div>
-
-              <!-- Search button -->
-              <button type="submit" class="btn-search" title="Search"></button>
-
-              <!-- Reset button -->
-              <button type="reset"  class="btn-reset"  title="Reset"></button>
-            </div>
-          </form>
-
-          <main class="grid">
-            <!-- CARD TEMPLATE -->
-            <div class="card">
-              <div class="card-upper">
-                <img class="avatar" src="assets/images/avatars/avatar-1.png" alt="avatar" />
-                <div class="info">
-                  <p class="name">Richard Atkinson</p>
-                  <p class="email">keanu2006@gmail.com</p>
-                </div>
-              </div>
-              <div class="card-lower">
-                <div class="actions">
-                  <button><i class="fas fa-pen"></i></button>
-                  <button><i class="fas fa-trash"></i></button>
-                  <button><i class="fas fa-key"></i></button>
-                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
-                </div>
-                <span class="tag staff">Staff</span>
-              </div>
-            </div>
-
-            <!-- Repeat for more cards... -->
-              <div class="card">
-              <div class="card-upper">
-                <img class="avatar" src="assets/images/avatars/avatar-2.png" alt="avatar" />
-                <div class="info">
-                  <p class="name">Richard Atkinson</p>
-                  <p class="email">keanu2006@gmail.com</p>
-                </div>
-              </div>
-              <div class="card-lower">
-                <div class="actions">
-                  <button><i class="fas fa-pen"></i></button>
-                  <button><i class="fas fa-trash"></i></button>
-                  <button><i class="fas fa-key"></i></button>
-                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
-                </div>
-                <span class="tag staff">Staff</span>
-              </div>
-            </div>
-            <!--  -->
-            <div class="card">
-              <div class="card-upper">
-                <img class="avatar" src="assets/images/avatars/avatar-3.png" alt="avatar" />
-                <div class="info">
-                  <p class="name">Rahul Singh</p>
-                  <p class="email">rahul2008@gmail.com</p>
-                </div>
-              </div>
-              <div class="card-lower">
-                <div class="actions">
-                  <button><i class="fas fa-pen"></i></button>
-                  <button><i class="fas fa-trash"></i></button>
-                  <button><i class="fas fa-key"></i></button>
-                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
-                </div>
-                <span class="tag staff">Staff</span>
-              </div>
-            </div>
-            <!--  -->
-            <div class="card">
-              <div class="card-upper">
-                <img class="avatar" src="assets/images/avatars/avatar-4.png" alt="avatar" />
-                <div class="info">
-                  <p class="name">Pramod saini</p>
-                  <p class="email">Pramodsaini189@gmail.com</p>
-                </div>
-              </div>
-              <div class="card-lower">
-                <div class="actions">
-                  <button><i class="fas fa-pen"></i></button>
-                  <button><i class="fas fa-trash"></i></button>
-                  <button><i class="fas fa-key"></i></button>
-                  <button><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i></button>
-                </div>
-                <span class="tag staff">Staff</span>
-              </div>
-            </div>
-          </main>
-
-            </div>
-          </div>
-    </div>
-  </div> {% endcomment %}
  {% endblock %}
